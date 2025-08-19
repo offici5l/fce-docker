@@ -50,8 +50,8 @@ else
 fi
 
 mkdir -p ../output
-[ -f boot.img ] && zip -r ../output/boot_img.zip boot.img
-[ -f init_boot.img ] && zip -r ../output/init_boot_img.zip init_boot.img
-[ -f vendor_boot.img ] && zip -r ../output/vendor_boot_img.zip vendor_boot.img
+[ -f boot.img ] && cp boot.img ../output/
+[ -f init_boot.img ] && cp init_boot.img ../output/
+[ -f vendor_boot.img ] && cp vendor_boot.img ../output/
 
 echo "SUCCESS: Extraction completed"
