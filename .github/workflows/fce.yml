@@ -1,4 +1,4 @@
-name: FCE Extraction
+name: FCE Workflow
 
 on:
   workflow_dispatch:
@@ -10,25 +10,20 @@ on:
 jobs:
   fce:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/offici5l/fce-docker:latest
     outputs:
       files: ${{ steps.list.outputs.files }}
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Ensure output directory
-        run: mkdir -p /workspace/output
-
-      - name: Run FCE extraction
-        env:
-          URL: ${{ github.event.inputs.url }}
-        run: /entrypoint.sh
+      - name: Run container
+        run: |
+          docker run --rm \
+            -e URL="${{ github.event.inputs.url }}" \
+            -v ${{ github.workspace }}:/workspace \
+            ghcr.io/offici5l/fce-docker:latest
 
       - name: List extracted files
         id: list
         run: |
-          files=$(ls -1 /workspace/output/* | jq -R -s -c 'split("\n")[:-1]')
+          files=$(ls -1 output/*.zip | jq -R -s -c 'split("\n")[:-1]')
           echo "files=$files" >> $GITHUB_OUTPUT
 
   upload:
@@ -38,8 +33,14 @@ jobs:
       matrix:
         file: ${{ fromJson(needs.fce.outputs.files) }}
     steps:
+      - name: Get filename
+        id: name
+        run: |
+          fname=$(basename "${{ matrix.file }}")
+          echo "filename=$fname" >> $GITHUB_OUTPUT
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ basename(matrix.file) }}
+          name: ${{ steps.name.outputs.filename }}
           path: ${{ matrix.file }}
