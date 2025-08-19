@@ -13,10 +13,7 @@ jobs:
     outputs:
       files: ${{ steps.list.outputs.files }}
     steps:
-      - name: Create output directory
-        run: mkdir -p output
-
-      - name: Run FCE container
+      - name: Run container
         run: |
           docker run --rm \
             -e URL="${{ github.event.inputs.url }}" \
@@ -27,7 +24,7 @@ jobs:
         id: list
         run: |
           mkdir -p output
-          files=$(find output -type f | jq -R -s -c 'split("\n")[:-1]')
+          files=$(ls -1 output/*.zip 2>/dev/null | jq -R -s -c 'split("\n")[:-1]')
           echo "files=$files" >> $GITHUB_OUTPUT
 
   upload:
