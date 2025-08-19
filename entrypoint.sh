@@ -17,29 +17,37 @@ DOMAINS=(
   "airtel.bigota.d.miui.com"
 )
 
-for DOMAIN in "${DOMAINS[@]}"; do
-  if [[ "$URL" == *"$DOMAIN"* ]]; then
-    URL="${URL/$DOMAIN/bkt-sgp-miui-ota-update-alisgp.oss-ap-southeast-1.aliyuncs.com}"
+for domain in "${DOMAINS[@]}"; do
+  if [[ "$URL" == *"$domain"* ]]; then
+    URL=${URL/$domain/bkt-sgp-miui-ota-update-alisgp.oss-ap-southeast-1.aliyuncs.com}
     break
   fi
 done
 
-if [[ "$URL" == *.zip* ]]; then
-  URL="${URL%%.zip*}.zip"
+if [[ "$URL" == *".zip"* ]]; then
+  URL="${URL%%.zip}.zip"
+else
+  echo "ERROR: Only .zip URLs are supported"
+  exit 1
 fi
 
-aria2c -x16 -s16 -d /workspace -o rom.zip "$URL"
-7z x /workspace/rom.zip -oextracted >/dev/null
+echo "Downloading ROM from $URL"
+aria2c -x16 -s16 -o rom.zip "$URL"
+
+echo "Extracting ROM"
+7z x rom.zip -oextracted >/dev/null
 
 cd extracted
 if [ -f payload.bin ]; then
-  payload-dumper-go payload.bin
+  /tools/payload-dumper-go payload.bin
 fi
 
 mkdir -p /workspace/output
 
-[ -f boot.img ] && zip -r /workspace/output/boot_img.zip boot.img >/dev/null
-[ -f init_boot.img ] && zip -r /workspace/output/init_boot_img.zip init_boot.img >/dev/null
-[ -f vendor_boot.img ] && zip -r /workspace/output/vendor_boot_img.zip vendor_boot.img >/dev/null
+for f in boot.img init_boot.img vendor_boot.img; do
+  if [ -f "$f" ]; then
+    zip -r "/workspace/output/${f%.img}.zip" "$f" >/dev/null
+  fi
+done
 
 echo "SUCCESS: Extraction completed"
