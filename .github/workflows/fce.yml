@@ -23,22 +23,49 @@ jobs:
           URL: ${{ github.event.inputs.url }}
         run: /entrypoint.sh
 
-      - name: Upload boot_img.zip if exists
-        if: ${{ always() && (exists('/workspace/output/boot_img.zip')) }}
+      - name: Check if boot_img.zip exists
+        id: check_boot
+        run: |
+          if [ -f "/workspace/output/boot_img.zip" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload boot_img.zip
+        if: ${{ steps.check_boot.outputs.exists == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: boot_img
           path: /workspace/output/boot_img.zip
 
-      - name: Upload init_boot_img.zip if exists
-        if: ${{ always() && (exists('/workspace/output/init_boot_img.zip')) }}
+      - name: Check if init_boot_img.zip exists
+        id: check_init
+        run: |
+          if [ -f "/workspace/output/init_boot_img.zip" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload init_boot_img.zip
+        if: ${{ steps.check_init.outputs.exists == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: init_boot_img
           path: /workspace/output/init_boot_img.zip
 
-      - name: Upload vendor_boot_img.zip if exists
-        if: ${{ always() && (exists('/workspace/output/vendor_boot_img.zip')) }}
+      - name: Check if vendor_boot_img.zip exists
+        id: check_vendor
+        run: |
+          if [ -f "/workspace/output/vendor_boot_img.zip" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload vendor_boot_img.zip
+        if: ${{ steps.check_vendor.outputs.exists == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: vendor_boot_img
