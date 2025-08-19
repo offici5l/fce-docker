@@ -26,7 +26,7 @@ jobs:
       - name: List extracted files
         id: list
         run: |
-          files=$(ls -1 output/* | jq -R -s -c 'split("\n")[:-1]')
+          files=$(find output -type f -name "*.zip" | jq -R -s -c 'split("\n")[:-1]')
           echo "files=$files" >> $GITHUB_OUTPUT
 
   upload:

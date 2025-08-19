@@ -55,8 +55,8 @@ fi
 
 mkdir -p /workspace/output
 
-[ -f boot.img ] && zip -r /workspace/output/boot_img.zip boot.img >/dev/null
-[ -f init_boot.img ] && zip -r /workspace/output/init_boot_img.zip init_boot.img >/dev/null
-[ -f vendor_boot.img ] && zip -r /workspace/output/vendor_boot_img.zip vendor_boot.img >/dev/null
+[ -f boot.img ] && zip -r /workspace/output/boot_img.zip boot.img
+[ -f init_boot.img ] && zip -r /workspace/output/init_boot_img.zip init_boot.img
+[ -f vendor_boot.img ] && zip -r /workspace/output/vendor_boot_img.zip vendor_boot.img
 
 echo "SUCCESS: Extraction completed"
