@@ -6,12 +6,6 @@ if [ -z "$URL" ]; then
   exit 1
 fi
 
-ROM_PATH=/workspace/rom.zip
-EXTRACT_PATH=/workspace/extracted
-OUTPUT_PATH=/workspace/output
-
-mkdir -p "$EXTRACT_PATH" "$OUTPUT_PATH"
-
 domains=(
 "ultimateota.d.miui.com"
 "superota.d.miui.com"
@@ -35,32 +29,29 @@ if [[ "$URL" != *.zip* ]]; then
   exit 1
 fi
 
-URL="${URL%%\?*}"
+cd /workspace
 
 echo "Downloading ROM from $URL"
-aria2c -x16 -s16 -o "$ROM_PATH" "$URL"
+aria2c -x16 -s16 -o rom.zip "$URL"
 
 echo "Extracting ROM"
-7z x "$ROM_PATH" -o"$EXTRACT_PATH" >/dev/null
-
-cd "$EXTRACT_PATH"
-
-boot_img="false"
-init_boot="false"
-vendor_boot="false"
+mkdir -p extracted
+7z x rom.zip -oextracted >/dev/null
+cd extracted
 
 if [ -f "payload.bin" ]; then
   echo "payload.bin found, extracting images..."
   for img in boot init_boot vendor_boot; do
     echo "Attempting to extract $img..."
-    python3 /tools/payload_dumper.py --out . --images $img payload.bin || echo "$img not found in payload.bin, skipping..."
+    python3 /tools/payload_dumper.py --out . --images $img payload.bin || echo "$img not found, skipping..."
   done
 else
   echo "payload.bin not found, using existing images..."
 fi
 
-[ -f boot.img ] && zip -r "$OUTPUT_PATH/boot_img.zip" boot.img
-[ -f init_boot.img ] && zip -r "$OUTPUT_PATH/init_boot_img.zip" init_boot.img
-[ -f vendor_boot.img ] && zip -r "$OUTPUT_PATH/vendor_boot_img.zip" vendor_boot.img
+mkdir -p ../output
+[ -f boot.img ] && zip -r ../output/boot_img.zip boot.img
+[ -f init_boot.img ] && zip -r ../output/init_boot_img.zip init_boot.img
+[ -f vendor_boot.img ] && zip -r ../output/vendor_boot_img.zip vendor_boot.img
 
 echo "SUCCESS: Extraction completed"
