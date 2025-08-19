@@ -16,7 +16,7 @@ jobs:
       - name: Create output directory
         run: mkdir -p output
 
-      - name: Run FCE container
+      - name: Run container
         run: |
           docker run --rm \
             -e URL="${{ github.event.inputs.url }}" \
@@ -26,11 +26,7 @@ jobs:
       - name: List extracted files
         id: list
         run: |
-          if ls ./output/* 1> /dev/null 2>&1; then
-            files=$(ls -1 ./output/* | jq -R -s -c 'split("\n")[:-1]')
-          else
-            files="[]"
-          fi
+          files=$(ls -1 output/* | jq -R -s -c 'split("\n")[:-1]')
           echo "files=$files" >> $GITHUB_OUTPUT
 
   upload:
@@ -43,5 +39,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ basename(matrix.file) }}
+          name: ${{ matrix.file }}
           path: ${{ matrix.file }}
