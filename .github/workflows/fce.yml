@@ -23,50 +23,50 @@ jobs:
           URL: ${{ github.event.inputs.url }}
         run: /entrypoint.sh
 
-      - name: Check if boot_img exists
+      - name: Check if boot.img exists
         id: check_boot
         run: |
-          if [ -f "/workspace/output/boot_img" ]; then
+          if [ -f "/workspace/output/boot.img" ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Upload boot_img
+      - name: Upload boot.img
         if: ${{ steps.check_boot.outputs.exists == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: boot_img
-          path: /workspace/output/boot_img
+          path: /workspace/output/boot.img
 
-      - name: Check if init_boot_img exists
+      - name: Check if init_boot.img exists
         id: check_init
         run: |
-          if [ -f "/workspace/output/init_boot_img" ]; then
+          if [ -f "/workspace/output/init_boot.img" ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Upload init_boot_img
+      - name: Upload init_boot.img
         if: ${{ steps.check_init.outputs.exists == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: init_boot_img
-          path: /workspace/output/init_boot_img
+          path: /workspace/output/init_boot.img
 
-      - name: Check if vendor_boot_img exists
+      - name: Check if vendor_boot.img exists
         id: check_vendor
         run: |
-          if [ -f "/workspace/output/vendor_boot_img" ]; then
+          if [ -f "/workspace/output/vendor_boot.img" ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Upload vendor_boot_img
+      - name: Upload vendor_boot.img
         if: ${{ steps.check_vendor.outputs.exists == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: vendor_boot_img
-          path: /workspace/output/vendor_boot_img
+          path: /workspace/output/vendor_boot.img
