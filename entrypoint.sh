@@ -30,10 +30,12 @@ for domain in "${domains[@]}"; do
   fi
 done
 
-if [[ "$URL" != *.zip ]]; then
+if [[ "$URL" != *.zip* ]]; then
   echo "Only .zip URLs are supported."
   exit 1
 fi
+
+URL="${URL%%\?*}"
 
 echo "Downloading ROM from $URL"
 aria2c -x16 -s16 -o "$ROM_PATH" "$URL"
