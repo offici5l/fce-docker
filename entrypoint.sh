@@ -1,28 +1,27 @@
 #!/bin/bash
-set -euo pipefail
+set -e
 
-if [ -z "${URL:-}" ]; then
-  echo "URL is not set"
+if [ -z "$URL" ]; then
+  echo "ERROR: URL not provided"
   exit 1
 fi
 
-aria2c -x 7 -s 7 -k 1M --continue --max-tries=0 --out="exrom.zip" "$URL"
-7z x exrom.zip -o./
-rm -f exrom.zip
+echo "Downloading ROM from $URL"
+aria2c -x16 -s16 -o rom.zip "$URL"
 
-if [ -f "payload.bin" ]; then
-  for img in boot init_boot vendor_boot; do
-    python3 /tools/payload_dumper.py --out . --images "$img" payload.bin || echo "$img not found in payload.bin"
-  done
+echo "Extracting ROM"
+7z x rom.zip -oextracted >/dev/null
+
+cd extracted
+if [ -f payload.bin ]; then
+  echo "Dumping payload.bin"
+  payload-dumper-go payload.bin
 fi
 
-ROM_NAME=$(basename "$URL" .zip)
-ROM_NAME=$(echo "$ROM_NAME" | sed 's/[^A-Za-z0-9._-]/_/g')
+mkdir -p /workspace/output
 
-for img in boot init_boot vendor_boot; do
-  if [ -f "${img}.img" ]; then
-    7z a "${img}_img_${ROM_NAME}.zip" "${img}.img"
-  fi
-done
+[ -f boot.img ] && zip -r /workspace/output/boot_img.zip boot.img >/dev/null
+[ -f init_boot.img ] && zip -r /workspace/output/init_boot_img.zip init_boot.img >/dev/null
+[ -f vendor_boot.img ] && zip -r /workspace/output/vendor_boot_img.zip vendor_boot.img >/dev/null
 
-echo "done"
+echo "SUCCESS: Extraction completed"
