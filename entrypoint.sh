@@ -6,15 +6,33 @@ if [ -z "$URL" ]; then
   exit 1
 fi
 
-echo "Downloading ROM from $URL"
-aria2c -x16 -s16 -o rom.zip "$URL"
+DOMAINS=(
+  "ultimateota.d.miui.com"
+  "superota.d.miui.com"
+  "bigota.d.miui.com"
+  "cdnorg.d.miui.com"
+  "bn.d.miui.com"
+  "hugeota.d.miui.com"
+  "cdn-ota.azureedge.net"
+  "airtel.bigota.d.miui.com"
+)
 
-echo "Extracting ROM"
-7z x rom.zip -oextracted >/dev/null
+for DOMAIN in "${DOMAINS[@]}"; do
+  if [[ "$URL" == *"$DOMAIN"* ]]; then
+    URL="${URL/$DOMAIN/bkt-sgp-miui-ota-update-alisgp.oss-ap-southeast-1.aliyuncs.com}"
+    break
+  fi
+done
+
+if [[ "$URL" == *.zip* ]]; then
+  URL="${URL%%.zip*}.zip"
+fi
+
+aria2c -x16 -s16 -d /workspace -o rom.zip "$URL"
+7z x /workspace/rom.zip -oextracted >/dev/null
 
 cd extracted
 if [ -f payload.bin ]; then
-  echo "Dumping payload.bin"
   payload-dumper-go payload.bin
 fi
 
