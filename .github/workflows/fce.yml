@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/offici5l/fce-docker:latest
+    outputs:
+      files: ${{ steps.list.outputs.files }}
     steps:
       - uses: actions/checkout@v4
 
@@ -23,8 +25,21 @@ jobs:
           URL: ${{ github.event.inputs.url }}
         run: /entrypoint.sh
 
-      - name: Upload extracted artifacts
+      - name: List extracted files
+        id: list
+        run: |
+          files=$(ls -1 /workspace/output/* | jq -R -s -c 'split("\n")[:-1]')
+          echo "files=$files" >> $GITHUB_OUTPUT
+
+  upload:
+    needs: fce
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        file: ${{ fromJson(needs.fce.outputs.files) }}
+    steps:
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: extracted_files
-          path: /workspace/output/*
+          name: ${{ basename(matrix.file) }}
+          path: ${{ matrix.file }}
