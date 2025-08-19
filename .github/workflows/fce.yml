@@ -23,12 +23,23 @@ jobs:
           URL: ${{ github.event.inputs.url }}
         run: /entrypoint.sh
 
+      - name: Upload boot_img.zip if exists
+        if: ${{ always() && (exists('/workspace/output/boot_img.zip')) }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: boot_img
+          path: /workspace/output/boot_img.zip
 
-      - name: Upload each extracted file separately
-        run: |
-          for f in /workspace/output/*; do
-            name=$(basename "$f")
-            gh actions upload-artifact --name "$name" --path "$f"
-          done
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload init_boot_img.zip if exists
+        if: ${{ always() && (exists('/workspace/output/init_boot_img.zip')) }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: init_boot_img
+          path: /workspace/output/init_boot_img.zip
+
+      - name: Upload vendor_boot_img.zip if exists
+        if: ${{ always() && (exists('/workspace/output/vendor_boot_img.zip')) }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: vendor_boot_img
+          path: /workspace/output/vendor_boot_img.zip
