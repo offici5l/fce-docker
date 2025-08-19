@@ -32,6 +32,7 @@ else
 fi
 
 mkdir -p /workspace/output
+
 echo "Downloading ROM from $URL"
 aria2c -x16 -s16 -o /workspace/output/rom.zip "$URL"
 

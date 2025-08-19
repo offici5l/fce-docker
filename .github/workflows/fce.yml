@@ -13,6 +13,9 @@ jobs:
     outputs:
       files: ${{ steps.list.outputs.files }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Run container
         run: |
           docker run --rm \
@@ -23,8 +26,7 @@ jobs:
       - name: List extracted files
         id: list
         run: |
-          mkdir -p output
-          files=$(ls -1 output/*.zip 2>/dev/null | jq -R -s -c 'split("\n")[:-1]')
+          files=$(ls -1 /workspace/output/*.zip 2>/dev/null | jq -R -s -c 'split("\n")[:-1]')
           echo "files=$files" >> $GITHUB_OUTPUT
 
   upload:
