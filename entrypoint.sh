@@ -6,28 +6,28 @@ if [ -z "$URL" ]; then
   exit 1
 fi
 
-DOMAINS=(
-  "ultimateota.d.miui.com"
-  "superota.d.miui.com"
-  "bigota.d.miui.com"
-  "cdnorg.d.miui.com"
-  "bn.d.miui.com"
-  "hugeota.d.miui.com"
-  "cdn-ota.azureedge.net"
-  "airtel.bigota.d.miui.com"
+domains=(
+"ultimateota.d.miui.com"
+"superota.d.miui.com"
+"bigota.d.miui.com"
+"cdnorg.d.miui.com"
+"bn.d.miui.com"
+"hugeota.d.miui.com"
+"cdn-ota.azureedge.net"
+"airtel.bigota.d.miui.com"
 )
 
-for domain in "${DOMAINS[@]}"; do
+for domain in "${domains[@]}"; do
   if [[ "$URL" == *"$domain"* ]]; then
-    URL=${URL/$domain/bkt-sgp-miui-ota-update-alisgp.oss-ap-southeast-1.aliyuncs.com}
+    URL="${URL/$domain/bkt-sgp-miui-ota-update-alisgp.oss-ap-southeast-1.aliyuncs.com}"
     break
   fi
 done
 
 if [[ "$URL" == *".zip"* ]]; then
-  URL="${URL%%.zip}.zip"
+  URL="${URL%%.zip*}.zip"
 else
-  echo "ERROR: Only .zip URLs are supported"
+  echo "Only .zip URLs are supported."
   exit 1
 fi
 
@@ -45,9 +45,7 @@ fi
 mkdir -p /workspace/output
 
 for f in boot.img init_boot.img vendor_boot.img; do
-  if [ -f "$f" ]; then
-    zip -r "/workspace/output/${f%.img}.zip" "$f" >/dev/null
-  fi
+  [ -f "$f" ] && zip -r "/workspace/output/${f%.img}_zip.zip" "$f" >/dev/null
 done
 
 echo "SUCCESS: Extraction completed"

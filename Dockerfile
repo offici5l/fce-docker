@@ -7,11 +7,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     zip \
     unzip \
-    golang-go \
+    golang \
  && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/vm03/payload_dumper.git /tools \
- && pip install -r /tools/requirements.txt \
+RUN git clone https://github.com/ssut/payload-dumper-go.git /tools \
  && cd /tools \
  && go build -o payload-dumper-go .
 
