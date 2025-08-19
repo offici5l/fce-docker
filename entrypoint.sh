@@ -44,13 +44,9 @@ init_boot="false"
 vendor_boot="false"
 
 if [ -f "payload.bin" ]; then
-  echo "payload.bin found, extracting images..."
   for img in boot init_boot vendor_boot; do
-    echo "Attempting to extract $img..."
-    python3 /tools/payload_dumper.py --out . --images $img payload.bin || echo "$img not found in payload.bin, skipping..."
+    python3 /tools/payload_dumper.py --out . --images $img payload.bin || true
   done
-else
-  echo "payload.bin not found, using existing images..."
 fi
 
 mkdir -p /workspace/output
