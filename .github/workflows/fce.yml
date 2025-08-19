@@ -1,4 +1,4 @@
-name: FCE Workflow
+name: FCE Extraction
 
 on:
   workflow_dispatch:
@@ -10,37 +10,25 @@ on:
 jobs:
   fce:
     runs-on: ubuntu-latest
-    outputs:
-      files: ${{ steps.list.outputs.files }}
+    container:
+      image: ghcr.io/offici5l/fce-docker:latest
     steps:
-      - name: Run container
-        run: |
-          docker run --rm \
-            -e URL="${{ github.event.inputs.url }}" \
-            -v ${{ github.workspace }}:/workspace \
-            ghcr.io/offici5l/fce-docker:latest
+      - uses: actions/checkout@v4
 
-      - name: List extracted files
-        id: list
-        run: |
-          files=$(ls -1 output/*.zip | jq -R -s -c 'split("\n")[:-1]')
-          echo "files=$files" >> $GITHUB_OUTPUT
+      - name: Ensure output directory
+        run: mkdir -p /workspace/output
 
-  upload:
-    needs: fce
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        file: ${{ fromJson(needs.fce.outputs.files) }}
-    steps:
-      - name: Get filename
-        id: name
-        run: |
-          fname=$(basename "${{ matrix.file }}")
-          echo "filename=$fname" >> $GITHUB_OUTPUT
+      - name: Run FCE extraction
+        env:
+          URL: ${{ github.event.inputs.url }}
+        run: /entrypoint.sh
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.name.outputs.filename }}
-          path: ${{ matrix.file }}
+
+      - name: Upload each extracted file separately
+        run: |
+          for f in /workspace/output/*; do
+            name=$(basename "$f")
+            gh actions upload-artifact --name "$name" --path "$f"
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
