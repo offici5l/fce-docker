@@ -5,6 +5,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     aria2 \
     git \
     curl \
+    zip \
+    unzip \
  && rm -rf /var/lib/apt/lists/*
 
 RUN git clone https://github.com/vm03/payload_dumper.git /tools \
