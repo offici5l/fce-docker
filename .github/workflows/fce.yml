@@ -10,6 +10,8 @@ on:
 jobs:
   fce:
     runs-on: ubuntu-latest
+    outputs:
+      files: ${{ steps.list.outputs.files }}
     steps:
       - name: Create output directory
         run: mkdir -p output
@@ -21,8 +23,21 @@ jobs:
             -v ${{ github.workspace }}:/workspace \
             ghcr.io/offici5l/fce-docker:latest
 
-      - name: Upload extracted files
+      - name: List extracted files
+        id: list
+        run: |
+          files=$(ls -1 output/* | jq -R -s -c 'split("\n")[:-1]')
+          echo "files=$files" >> $GITHUB_OUTPUT
+
+  upload:
+    needs: fce
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        file: ${{ fromJson(needs.fce.outputs.files) }}
+    steps:
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: extracted-files
-          path: output/
+          name: ${{ matrix.file }}
+          path: ${{ matrix.file }}
