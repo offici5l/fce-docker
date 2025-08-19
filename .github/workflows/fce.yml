@@ -16,6 +16,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Create output directory
+        run: mkdir -p output
+
       - name: Run container
         run: |
           docker run --rm \
@@ -26,7 +29,7 @@ jobs:
       - name: List extracted files
         id: list
         run: |
-          files=$(ls -1 /workspace/output/*.zip 2>/dev/null | jq -R -s -c 'split("\n")[:-1]')
+          files=$(ls -1 output/*.zip 2>/dev/null | jq -R -s -c 'split("\n")[:-1]')
           echo "files=$files" >> $GITHUB_OUTPUT
 
   upload:

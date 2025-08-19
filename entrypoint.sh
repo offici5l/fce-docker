@@ -6,6 +6,12 @@ if [ -z "$URL" ]; then
   exit 1
 fi
 
+ROM_PATH=/workspace/rom.zip
+EXTRACT_PATH=/workspace/extracted
+OUTPUT_PATH=/workspace/output
+
+mkdir -p "$EXTRACT_PATH" "$OUTPUT_PATH"
+
 domains=(
 "ultimateota.d.miui.com"
 "superota.d.miui.com"
@@ -24,22 +30,18 @@ for domain in "${domains[@]}"; do
   fi
 done
 
-if [[ "$URL" == *".zip"* ]]; then
-  URL="${URL%%.zip*}.zip"
-else
+if [[ "$URL" != *.zip ]]; then
   echo "Only .zip URLs are supported."
   exit 1
 fi
 
-mkdir -p /workspace/output
-
 echo "Downloading ROM from $URL"
-aria2c -x16 -s16 -o /workspace/output/rom.zip "$URL"
+aria2c -x16 -s16 -o "$ROM_PATH" "$URL"
 
 echo "Extracting ROM"
-7z x /workspace/output/rom.zip -o/workspace/output >/dev/null
+7z x "$ROM_PATH" -o"$EXTRACT_PATH" >/dev/null
 
-cd /workspace/output
+cd "$EXTRACT_PATH"
 
 boot_img="false"
 init_boot="false"
@@ -55,8 +57,8 @@ else
   echo "payload.bin not found, using existing images..."
 fi
 
-[ -f boot.img ] && zip -r boot_img.zip boot.img
-[ -f init_boot.img ] && zip -r init_boot_img.zip init_boot.img
-[ -f vendor_boot.img ] && zip -r vendor_boot_img.zip vendor_boot.img
+[ -f boot.img ] && zip -r "$OUTPUT_PATH/boot_img.zip" boot.img
+[ -f init_boot.img ] && zip -r "$OUTPUT_PATH/init_boot_img.zip" init_boot.img
+[ -f vendor_boot.img ] && zip -r "$OUTPUT_PATH/vendor_boot_img.zip" vendor_boot.img
 
 echo "SUCCESS: Extraction completed"
