@@ -26,7 +26,6 @@ jobs:
       - name: List extracted files
         id: list
         run: |
-          # التأكد من وجود ملفات في output
           if ls ./output/* 1> /dev/null 2>&1; then
             files=$(ls -1 ./output/* | jq -R -s -c 'split("\n")[:-1]')
           else
