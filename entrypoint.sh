@@ -38,14 +38,25 @@ echo "Extracting ROM"
 7z x rom.zip -oextracted >/dev/null
 
 cd extracted
-if [ -f payload.bin ]; then
-  /tools/payload-dumper-go payload.bin
+
+boot_img="false"
+init_boot="false"
+vendor_boot="false"
+
+if [ -f "payload.bin" ]; then
+  echo "payload.bin found, extracting images..."
+  for img in boot init_boot vendor_boot; do
+    echo "Attempting to extract $img..."
+    ./tools/payload_dumper.py --out . --images $img payload.bin || echo "$img not found in payload.bin, skipping..."
+  done
+else
+  echo "payload.bin not found, using existing images..."
 fi
 
 mkdir -p /workspace/output
 
-for f in boot.img init_boot.img vendor_boot.img; do
-  [ -f "$f" ] && zip -r "/workspace/output/${f%.img}_zip.zip" "$f" >/dev/null
-done
+[ -f boot.img ] && zip -r /workspace/output/boot_img.zip boot.img >/dev/null
+[ -f init_boot.img ] && zip -r /workspace/output/init_boot_img.zip init_boot.img >/dev/null
+[ -f vendor_boot.img ] && zip -r /workspace/output/vendor_boot_img.zip vendor_boot.img >/dev/null
 
 echo "SUCCESS: Extraction completed"
