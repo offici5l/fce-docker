@@ -8,13 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone payload_dumper
-RUN git clone https://github.com/vm03/payload_dumper.git /tools \
-    && pip install -r /tools/requirements.txt
-
-# Download and extract erofs-utils
-RUN aria2c -o erofs-utils.zip https://github.com/sekaiacg/erofs-utils/releases/download/v1.8.1-240810/erofs-utils-v1.8.1-gddbed144-Linux_x86_64-2408101422.zip \
-    && 7z x erofs-utils.zip -o/tools \
-    && rm -f erofs-utils.zip
+RUN git clone https://github.com/vm03/payload_dumper.git /tools
 
 # --- Final stage - A smaller image with only necessary files ---
 FROM python:3.11-slim
@@ -27,6 +21,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy tools and scripts from the builder stage
 COPY --from=builder /tools /tools
+
+# Install Python dependencies (bsdiff4 and others)
+RUN pip install -r /tools/requirements.txt
+
+# Download and extract erofs-utils
+RUN aria2c -o erofs-utils.zip https://github.com/sekaiacg/erofs-utils/releases/download/v1.8.1-240810/erofs-utils-v1.8.1-gddbed144-Linux_x86_64-2408101422.zip \
+    && 7z x erofs-utils.zip -o/tools \
+    && rm -f erofs-utils.zip
+
+# Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
