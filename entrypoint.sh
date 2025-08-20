@@ -42,7 +42,6 @@ REPLACEMENT_DOMAIN="bkt-sgp-miui-ota-update-alisgp.oss-ap-southeast-1.aliyuncs.c
 for domain in "${MIUI_DOMAINS[@]}"; do
   if [[ "$URL" == *"$domain"* ]]; then
     URL="${URL/$domain/$REPLACEMENT_DOMAIN}"
-    echo "    URL transformed to: $URL"
     break
   fi
 done
@@ -65,7 +64,6 @@ echo "--> Extracting ROM..."
 mkdir -p extracted
 if ! 7z x rom.zip -oextracted >/dev/null; then
     echo "ERROR: Failed to extract ROM archive." >&2
-    rm rom.zip
     exit 1
 fi
 cd extracted
@@ -89,21 +87,12 @@ elif [ -f "payload.bin" ]; then
         echo "SUCCESS: '$FILE_TO_EXTRACT.img' is available in the output directory."
     else
         echo "ERROR: Could not find or extract '$FILE_TO_EXTRACT' from payload.bin." >&2
-        cd ..
-        rm -rf extracted rom.zip
         exit 1
     fi
 else
     echo "ERROR: Neither '$FILE_TO_EXTRACT.img' nor 'payload.bin' were found in the ROM archive." >&2
-    cd ..
-    rm -rf extracted rom.zip
     exit 1
 fi
-
-# --- Cleanup ---
-echo "--> Cleaning up temporary files..."
-cd ..
-rm -rf extracted rom.zip
 
 echo "--> Done."
 exit 0
