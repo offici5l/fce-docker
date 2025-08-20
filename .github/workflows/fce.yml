@@ -6,12 +6,15 @@ on:
       url:
         description: "ROM Download URL"
         required: true
+      file_to_extract:
+        description: "Name of the file to extract (e.g., boot, vendor_boot)"
+        required: true
 
 jobs:
   fce:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/offici5l/fce-docker:latest
+      image: ghcr.io/${{ github.repository_owner }}/fce-docker:latest
     steps:
       - uses: actions/checkout@v4
 
@@ -19,54 +22,10 @@ jobs:
         run: mkdir -p /workspace/output
 
       - name: Run FCE extraction
-        env:
-          URL: ${{ github.event.inputs.url }}
-        run: /entrypoint.sh
+        run: /entrypoint.sh "${{ github.event.inputs.url }}" "${{ github.event.inputs.file_to_extract }}"
 
-      - name: Check if boot.img exists
-        id: check_boot
-        run: |
-          if [ -f "/workspace/output/boot.img" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Upload boot.img
-        if: ${{ steps.check_boot.outputs.exists == 'true' }}
+      - name: Upload extracted file
         uses: actions/upload-artifact@v4
         with:
-          name: boot_img
-          path: /workspace/output/boot.img
-
-      - name: Check if init_boot.img exists
-        id: check_init
-        run: |
-          if [ -f "/workspace/output/init_boot.img" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Upload init_boot.img
-        if: ${{ steps.check_init.outputs.exists == 'true' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: init_boot_img
-          path: /workspace/output/init_boot.img
-
-      - name: Check if vendor_boot.img exists
-        id: check_vendor
-        run: |
-          if [ -f "/workspace/output/vendor_boot.img" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Upload vendor_boot.img
-        if: ${{ steps.check_vendor.outputs.exists == 'true' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: vendor_boot_img
-          path: /workspace/output/vendor_boot.img
+          name: ${{ github.event.inputs.file_to_extract }}_image
+          path: /workspace/output/${{ github.event.inputs.file_to_extract }}.img

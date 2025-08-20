@@ -1,57 +1,108 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-if [ -z "$URL" ]; then
-  echo "ERROR: URL not provided"
+# Check for required tools
+for tool in aria2c 7z python3; do
+  if ! command -v "$tool" &> /dev/null; then
+    echo "ERROR: Required tool '$tool' is not installed." >&2
+    exit 1
+  fi
+done
+
+# --- Input Validation ---
+if [ -z "${1-}" ]; then
+  echo "ERROR: ROM URL not provided." >&2
+  echo "Usage: $0 <URL> <FILE_TO_EXTRACT>" >&2
   exit 1
 fi
 
-domains=(
-"ultimateota.d.miui.com"
-"superota.d.miui.com"
-"bigota.d.miui.com"
-"cdnorg.d.miui.com"
-"bn.d.miui.com"
-"hugeota.d.miui.com"
-"cdn-ota.azureedge.net"
-"airtel.bigota.d.miui.com"
-)
+if [ -z "${2-}" ]; then
+  echo "ERROR: File to extract not provided." >&2
+  echo "Usage: $0 <URL> <FILE_TO_EXTRACT>" >&2
+  exit 1
+fi
 
-for domain in "${domains[@]}"; do
+URL="$1"
+FILE_TO_EXTRACT="$2"
+
+# --- URL Transformation ---
+echo "--> Transforming URL..."
+MIUI_DOMAINS=(
+  "ultimateota.d.miui.com"
+  "superota.d.miui.com"
+  "bigota.d.miui.com"
+  "cdnorg.d.miui.com"
+  "bn.d.miui.com"
+  "hugeota.d.miui.com"
+  "cdn-ota.azureedge.net"
+  "airtel.bigota.d.miui.com"
+)
+REPLACEMENT_DOMAIN="bkt-sgp-miui-ota-update-alisgp.oss-ap-southeast-1.aliyuncs.com"
+
+for domain in "${MIUI_DOMAINS[@]}"; do
   if [[ "$URL" == *"$domain"* ]]; then
-    URL="${URL/$domain/bkt-sgp-miui-ota-update-alisgp.oss-ap-southeast-1.aliyuncs.com}"
+    URL="${URL/$domain/$REPLACEMENT_DOMAIN}"
+    echo "    URL transformed to: $URL"
     break
   fi
 done
 
-if [[ "$URL" != *.zip* ]]; then
-  echo "Only .zip URLs are supported."
+if [[ "$URL" != *.zip ]]; then
+  echo "ERROR: Only .zip URLs are supported." >&2
   exit 1
 fi
 
+# --- Main Logic ---
 cd /workspace
-
-echo "Downloading ROM from $URL"
-aria2c -x16 -s16 -o rom.zip "$URL"
-
-echo "Extracting ROM"
-mkdir -p extracted
-7z x rom.zip -oextracted >/dev/null
-cd extracted
-
-if [ -f "payload.bin" ]; then
-  echo "payload.bin found, extracting images..."
-  for img in boot init_boot vendor_boot; do
-    echo "Attempting to extract $img..."
-    python3 /tools/payload_dumper.py --out . --images $img payload.bin || echo "$img not found, skipping..."
-  done
-else
-  echo "payload.bin not found, using existing images..."
+echo "--> Downloading ROM from $URL"
+if ! aria2c -x16 -s16 -o rom.zip "$URL"; then
+  echo "ERROR: Failed to download ROM." >&2
+  exit 1
 fi
 
-mkdir -p ../output
-[ -f boot.img ] && cp boot.img ../output/
-[ -f init_boot.img ] && cp init_boot.img ../output/
-[ -f vendor_boot.img ] && cp vendor_boot.img ../output/
+echo "--> Extracting ROM..."
+mkdir -p extracted
+if ! 7z x rom.zip -oextracted >/dev/null; then
+    echo "ERROR: Failed to extract ROM archive." >&2
+    rm rom.zip
+    exit 1
+fi
+cd extracted
 
-echo "SUCCESS: Extraction completed"
+# --- Output Handling ---
+mkdir -p ../output
+
+# Check if the file already exists
+if [ -f "$FILE_TO_EXTRACT.img" ]; then
+    echo "--> Found '$FILE_TO_EXTRACT.img' directly in the archive."
+    mv "$FILE_TO_EXTRACT.img" ../output/
+    echo "SUCCESS: '$FILE_TO_EXTRACT.img' is available in the output directory."
+# If not, check for payload.bin and extract from it
+elif [ -f "payload.bin" ]; then
+    echo "--> payload.bin found, attempting to extract '$FILE_TO_EXTRACT'..."
+    python3 /tools/payload_dumper.py --out . --images "$FILE_TO_EXTRACT" payload.bin
+
+    if [ -f "$FILE_TO_EXTRACT.img" ]; then
+        echo "--> Successfully extracted '$FILE_TO_EXTRACT.img'."
+        mv "$FILE_TO_EXTRACT.img" ../output/
+        echo "SUCCESS: '$FILE_TO_EXTRACT.img' is available in the output directory."
+    else
+        echo "ERROR: Could not find or extract '$FILE_TO_EXTRACT' from payload.bin." >&2
+        cd ..
+        rm -rf extracted rom.zip
+        exit 1
+    fi
+else
+    echo "ERROR: Neither '$FILE_TO_EXTRACT.img' nor 'payload.bin' were found in the ROM archive." >&2
+    cd ..
+    rm -rf extracted rom.zip
+    exit 1
+fi
+
+# --- Cleanup ---
+echo "--> Cleaning up temporary files..."
+cd ..
+rm -rf extracted rom.zip
+
+echo "--> Done."
+exit 0
