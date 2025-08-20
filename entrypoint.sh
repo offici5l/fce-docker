@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+mkdir -p /workspace/output
+
 # Check for required tools
 for tool in aria2c 7z python3; do
   if ! command -v "$tool" &> /dev/null; then
