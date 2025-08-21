@@ -1,1 +1,3 @@
+```
 docker run --rm ghcr.io/offici5l/fce:latest "<url_rom.zip>" <image_filename>
+```
