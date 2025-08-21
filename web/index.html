@@ -55,8 +55,7 @@
   }
   .success { color: green; }
   .failure { color: red; }
-  .in_progress { color: orange; }
-  .pending { color: gray; }
+  .pending { color: orange; }
 </style>
 </head>
 <body>
@@ -71,7 +70,7 @@
 </div>
 
 <script>
-const PROXY_URL = "https://fce-proxy.vercel.app/trigger";
+const PROXY_URL = "https://fce-proxy.vercel.app/api/trigger"; // endpoint صحيح
 const logDiv = document.getElementById('log');
 
 function log(msg, cls="") {
@@ -97,37 +96,24 @@ document.getElementById('startBtn').addEventListener('click', async () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url, file, unique_id: uniqueId })
     });
-    const result = await triggerResp.json();
+
+    const text = await triggerResp.text();
+    log(`HTTP Status: ${triggerResp.status} ${triggerResp.statusText}`, "pending");
+    log(`Response body: ${text}`, "pending");
+
+    let result;
+    try { result = JSON.parse(text); } catch { result = { message: text }; }
+
     if (!triggerResp.ok) {
       log("Error: " + JSON.stringify(result), "failure");
       return;
     }
-    log(result.message, "success");
 
-    // Poll GitHub for run status
-    let runId = null;
-    while (!runId) {
-      await new Promise(r => setTimeout(r, 5000));
-      const runsResp = await fetch(`https://api.github.com/repos/offici5l/fce-docker/actions/workflows/fce.yml/runs`);
-      const runsData = await runsResp.json();
-      runId = runsData.workflow_runs?.[0]?.id || null;
-    }
-    log(`Workflow run detected: ID = ${runId}`);
-    log(`Follow it manually at: https://github.com/offici5l/fce-docker/actions/runs/${runId}`);
-
-    let status = "";
-    while (status !== "completed") {
-      await new Promise(r => setTimeout(r, 5000));
-      const statusResp = await fetch(`https://api.github.com/repos/offici5l/fce-docker/actions/runs/${runId}`);
-      const statusData = await statusResp.json();
-      status = statusData.status;
-      const conclusion = statusData.conclusion || "pending";
-      log(`Status: ${status}, Conclusion: ${conclusion}`, conclusion);
-    }
-    log("Workflow completed!", "success");
+    log(result.message || "Workflow triggered successfully", "success");
+    log(`You can follow it manually at: https://github.com/offici5l/fce-docker/actions`, "pending");
 
   } catch(err) {
-    log("Error: " + err.message, "failure");
+    log("Network or fetch error: " + err.message, "failure");
   }
 });
 </script>
