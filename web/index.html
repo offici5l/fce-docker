@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub Workflow Trigger</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f0f2f5;
+    padding: 20px;
+  }
+  .container {
+    max-width: 500px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  }
+  h2 {
+    text-align: center;
+  }
+  input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+  }
+  button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #0056b3;
+  }
+  #log {
+    margin-top: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 6px;
+    white-space: pre-wrap;
+    font-family: monospace;
+  }
+  .success { color: green; }
+  .failure { color: red; }
+  .in_progress { color: orange; }
+  .pending { color: gray; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>GitHub Workflow Trigger</h2>
+  <label>ROM URL:</label>
+  <input type="text" id="urlInput" placeholder="https://example.com/rom.zip">
+  <label>File to Extract:</label>
+  <input type="text" id="fileInput" placeholder="boot">
+  <button id="startBtn">Start</button>
+  <div id="log"></div>
+</div>
+
+<script>
+const PROXY_URL = "https://fce-proxy.vercel.app/trigger";
+const logDiv = document.getElementById('log');
+
+function log(msg, cls="") {
+  const line = document.createElement("div");
+  if(cls) line.className = cls;
+  line.textContent = msg;
+  logDiv.appendChild(line);
+  logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+document.getElementById('startBtn').addEventListener('click', async () => {
+  const url = document.getElementById('urlInput').value;
+  const file = document.getElementById('fileInput').value;
+  if (!url || !file) { alert("Please enter both URL and file name."); return; }
+
+  const uniqueId = Date.now() + Math.floor(Math.random()*1000);
+  log(`Unique run ID: ${uniqueId}`);
+  log("Triggering workflow...");
+
+  try {
+    const triggerResp = await fetch(PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, file, unique_id: uniqueId })
+    });
+    const result = await triggerResp.json();
+    if (!triggerResp.ok) {
+      log("Error: " + JSON.stringify(result), "failure");
+      return;
+    }
+    log(result.message, "success");
+
+    // Poll GitHub for run status
+    let runId = null;
+    while (!runId) {
+      await new Promise(r => setTimeout(r, 5000));
+      const runsResp = await fetch(`https://api.github.com/repos/offici5l/fce-docker/actions/workflows/fce.yml/runs`);
+      const runsData = await runsResp.json();
+      runId = runsData.workflow_runs?.[0]?.id || null;
+    }
+    log(`Workflow run detected: ID = ${runId}`);
+    log(`Follow it manually at: https://github.com/offici5l/fce-docker/actions/runs/${runId}`);
+
+    let status = "";
+    while (status !== "completed") {
+      await new Promise(r => setTimeout(r, 5000));
+      const statusResp = await fetch(`https://api.github.com/repos/offici5l/fce-docker/actions/runs/${runId}`);
+      const statusData = await statusResp.json();
+      status = statusData.status;
+      const conclusion = statusData.conclusion || "pending";
+      log(`Status: ${status}, Conclusion: ${conclusion}`, conclusion);
+    }
+    log("Workflow completed!", "success");
+
+  } catch(err) {
+    log("Error: " + err.message, "failure");
+  }
+});
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN; 
-const REPO = "offici5l/fce";
+const REPO = "offici5l/FCE";
 const WORKFLOW_FILE = "fce.yml";
 const BRANCH = "main";
 
