@@ -17,7 +17,7 @@ jobs:
   fce:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/${{ github.repository_owner }}/fce-docker:latest
+      image: ghcr.io/${{ github.repository_owner }}/fce:latest
     steps:
 
       - name: FCE
