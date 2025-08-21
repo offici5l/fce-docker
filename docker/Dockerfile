@@ -31,7 +31,7 @@ RUN aria2c -o erofs-utils.zip https://github.com/sekaiacg/erofs-utils/releases/d
     && rm -f erofs-utils.zip
 
 # Copy entrypoint script
-COPY entrypoint.sh /entrypoint.sh
+COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 WORKDIR /workspace
