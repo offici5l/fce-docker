@@ -9,6 +9,9 @@ on:
       file_to_extract:
         description: "Name of the file to extract (e.g., boot, vendor_boot)"
         required: true
+      unique_id:
+        description: "Optional unique run identifier"
+        required: false
 
 jobs:
   fce:
