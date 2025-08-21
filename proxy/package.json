@@ -1,5 +1,5 @@
 {
-  "name": "vercel-github-proxy",
+  "name": "proxy",
   "version": "1.0.0",
   "main": "trigger.js",
   "license": "MIT",
