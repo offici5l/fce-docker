@@ -48,10 +48,12 @@ for domain in "${MIUI_DOMAINS[@]}"; do
   fi
 done
 
-if [[ "$URL" != *.zip* ]]; then
+if [[ ! "$URL" =~ \.zip ]]; then
   echo "ERROR: Only .zip URLs are supported." >&2
   exit 1
 fi
+
+echo "--> Final download URL: $URL"
 
 
 # --- Main Logic ---
