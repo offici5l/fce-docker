@@ -11,10 +11,11 @@ on:
         required: true
       unique_id:
         description: "unique run identifier"
-        required: false
+        required: true
 
 jobs:
   fce:
+    name: ${{ github.event.inputs.unique_id }}
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/${{ github.repository_owner }}/fce:latest
