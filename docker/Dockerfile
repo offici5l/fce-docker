@@ -5,6 +5,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     p7zip-full \
     aria2 \
     git \
+    zip \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone payload_dumper
@@ -19,6 +21,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     p7zip-full \
     aria2 \
     git \
+    zip \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy tools and scripts from the builder stage
