@@ -26,26 +26,11 @@ jobs:
       - name: Run FCE
         run: /entrypoint.sh "${{ github.event.inputs.url }}" "${{ github.event.inputs.file_to_extract }}"
 
-      - name: Prepare output
-        run: |
-          mkdir -p output
-          echo "Listing extracted files in /workspace/output:"
-          ls -lh /workspace/output
-          cp /workspace/output/${{ github.event.inputs.file_to_extract }}.img ./output/
-          echo "Listing files in ./output (to be published):"
-          ls -lh ./output
-
       - name: Upload to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./output
+          publish_dir: /workspace/output
           destination_dir: ${{ github.event.inputs.unique_id }}
           keep_files: true
           enable_jekyll: false
-
-      - name: Print download link
-        run: |
-          echo "✅ File uploaded!"
-          echo "➡️ Download URL:"
-          echo "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.event.inputs.unique_id }}/${{ github.event.inputs.file_to_extract }}.img"

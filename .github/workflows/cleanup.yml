@@ -1,0 +1,29 @@
+name: Cleanup old files
+
+on:
+  schedule:
+    - cron: "0 0 */3 * *"
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Delete old folders (older than 7 days)
+        run: |
+          find . -type d -maxdepth 1 -mtime +7 -exec rm -rf {} \;
+
+      - name: Commit and push changes
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add -A
+          git commit -m "Cleanup old files" || echo "No changes"
+          git push

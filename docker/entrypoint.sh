@@ -4,7 +4,7 @@ set -euo pipefail
 mkdir -p /workspace/output
 
 # Check for required tools
-for tool in aria2c 7z python3; do
+for tool in aria2c 7z python3 zip; do
   if ! command -v "$tool" &> /dev/null; then
     echo "ERROR: Required tool '$tool' is not installed." >&2
     exit 1
@@ -75,11 +75,13 @@ cd extracted
 # --- Output Handling ---
 mkdir -p ../output
 
+OUTPUT_IMG="../output/${FILE_TO_EXTRACT}.img"
+OUTPUT_ZIP="../output/${FILE_TO_EXTRACT}.zip"
+
 # Check if the file already exists
 if [ -f "$FILE_TO_EXTRACT.img" ]; then
     echo "--> Found '$FILE_TO_EXTRACT.img' directly in the archive."
-    mv "$FILE_TO_EXTRACT.img" ../output/
-    echo "SUCCESS: '$FILE_TO_EXTRACT.img' is available in the output directory."
+    mv "$FILE_TO_EXTRACT.img" "$OUTPUT_IMG"
 # If not, check for payload.bin and extract from it
 elif [ -f "payload.bin" ]; then
     echo "--> payload.bin found, attempting to extract '$FILE_TO_EXTRACT'..."
@@ -87,8 +89,7 @@ elif [ -f "payload.bin" ]; then
 
     if [ -f "$FILE_TO_EXTRACT.img" ]; then
         echo "--> Successfully extracted '$FILE_TO_EXTRACT.img'."
-        mv "$FILE_TO_EXTRACT.img" ../output/
-        echo "SUCCESS: '$FILE_TO_EXTRACT.img' is available in the output directory."
+        mv "$FILE_TO_EXTRACT.img" "$OUTPUT_IMG"
     else
         echo "ERROR: Could not find or extract '$FILE_TO_EXTRACT' from payload.bin." >&2
         exit 1
@@ -98,5 +99,17 @@ else
     exit 1
 fi
 
+# --- Compression ---
+echo "--> Compressing '$FILE_TO_EXTRACT.img' to ZIP..."
+cd ../output
+if ! zip -9 "$OUTPUT_ZIP" "${FILE_TO_EXTRACT}.img"; then
+    echo "ERROR: Failed to compress the image." >&2
+    exit 1
+fi
+
+# Delete the original .img after successful compression
+rm -f "${FILE_TO_EXTRACT}.img"
+
+echo "SUCCESS: Final file is available at '$OUTPUT_ZIP'"
 echo "--> Done."
 exit 0
