@@ -13,6 +13,9 @@ on:
         description: "unique run identifier"
         required: true
 
+permissions:
+  contents: write
+
 jobs:
   fce:
     name: ${{ github.event.inputs.unique_id }}
@@ -20,12 +23,19 @@ jobs:
     container:
       image: ghcr.io/${{ github.repository_owner }}/fce:latest
     steps:
-
-      - name: FCE
+      - name: Run FCE
         run: /entrypoint.sh "${{ github.event.inputs.url }}" "${{ github.event.inputs.file_to_extract }}"
 
-      - name: Upload
-        uses: actions/upload-artifact@v4
+      - name: Prepare output
+        run: |
+          mkdir -p output
+          cp /workspace/output/${{ github.event.inputs.file_to_extract }}.img output/
+
+      - name: Upload to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          name: ${{ github.event.inputs.file_to_extract }}_image
-          path: /workspace/output/${{ github.event.inputs.file_to_extract }}.img
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./output
+          destination_dir: ${{ github.event.inputs.unique_id }}
+          keep_files: true
+          enable_jekyll: false
