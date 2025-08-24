@@ -1,33 +1,45 @@
 #!/bin/bash
 
-URL_INPUT=""
+URL_INPUT="https://ultimateota.d.miui.com/OS2.0.201.0.VNTEUXM/moon_eea_global-ota_full-OS2.0.201.0.VNTEUXM-user-15.0-5e31983d6e.zip?t=1755293681&s=219e32da0eb22c71926089713aefe248"
 FILE_INPUT="boot"
 
 UNIQUE_ID="${FILE_INPUT}_$(basename "$URL_INPUT" | cut -d'?' -f1 | cut -d'.' -f1)"
+PROXY_URL="https://fce-proxy.vercel.app/api/trigger"
+
+# Function to call the proxy
+call_proxy() {
+    curl -s -X POST -H "Content-Type: application/json" -d "$1" "$PROXY_URL"
+}
 
 # Trigger workflow
-RESPONSE=$(curl -s -X POST \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"url\": \"$URL_INPUT\",
-    \"file\": \"$FILE_INPUT\",
-    \"unique_id\": \"$UNIQUE_ID\"
-  }" \
-  https://fce-proxy.vercel.app/api/trigger)
+RESPONSE=$(call_proxy "{\"action\": \"trigger\", \"url\": \"$URL_INPUT\", \"file\": \"$FILE_INPUT\", \"unique_id\": \"$UNIQUE_ID\"}")
 
-echo "$RESPONSE"
+# Parse response
+OK=$(echo "$RESPONSE" | jq -r '.ok')
+ERROR=$(echo "$RESPONSE" | jq -r '.error // empty')
 
+if [ "$OK" = "true" ]; then
+    echo "✅ Workflow triggered successfully (ID: $UNIQUE_ID)"
+else
+    echo "❌ Failed to trigger workflow"
+    if [ -n "$ERROR" ]; then
+        echo "Error: $ERROR"
+    fi
+    exit 1
+fi
+
+# Find the workflow run ID
 RUN_ID=""
 ATTEMPTS=0
 while [ -z "$RUN_ID" ] && [ $ATTEMPTS -lt 60 ]; do
     ATTEMPTS=$((ATTEMPTS+1))
     sleep 5
-    RESPONSE=$(curl -s "https://api.github.com/repos/offici5l/FCE/actions/workflows/fce.yml/runs?per_page=10")
+    RESPONSE=$(call_proxy '{"action": "get_runs"}')
     for id in $(echo "$RESPONSE" | jq -r '.workflow_runs[]?.id'); do
-        JOBS=$(curl -s "https://api.github.com/repos/offici5l/FCE/actions/runs/$id/jobs")
-        HAS_JOBS=$(echo "$JOBS" | jq -r 'has("jobs") and (.jobs != null)')
+        JOBS_RESPONSE=$(call_proxy "{\"action\": \"get_jobs\", \"run_id\": $id}")
+        HAS_JOBS=$(echo "$JOBS_RESPONSE" | jq -r 'has("jobs") and (.jobs != null)')
         if [ "$HAS_JOBS" == "true" ]; then
-            MATCH=$(echo "$JOBS" | jq -r --arg UNIQUE_ID "$UNIQUE_ID" '.jobs[] | select(.name == $UNIQUE_ID) | .id')
+            MATCH=$(echo "$JOBS_RESPONSE" | jq -r --arg UNIQUE_ID "$UNIQUE_ID" '.jobs[] | select(.name == $UNIQUE_ID) | .id')
             if [ -n "$MATCH" ]; then
                 RUN_ID=$id
                 break
@@ -49,24 +61,24 @@ CURRENT_STEP=""
 
 while [ "$STATUS" != "completed" ]; do
     sleep 3
-    RESPONSE=$(curl -s "https://api.github.com/repos/offici5l/FCE/actions/runs/$RUN_ID")
+    RESPONSE=$(call_proxy "{\"action\": \"get_run_details\", \"run_id\": $RUN_ID}")
     STATUS=$(echo "$RESPONSE" | jq -r '.status')
     CONCLUSION=$(echo "$RESPONSE" | jq -r '.conclusion')
 
-    JOBS=$(curl -s "https://api.github.com/repos/offici5l/FCE/actions/runs/$RUN_ID/jobs")
-    HAS_JOBS=$(echo "$JOBS" | jq -r 'has("jobs") and (.jobs != null)')
+    JOBS_RESPONSE=$(call_proxy "{\"action\": \"get_jobs\", \"run_id\": $RUN_ID}")
+    HAS_JOBS=$(echo "$JOBS_RESPONSE" | jq -r 'has("jobs") and (.jobs != null)')
     if [ "$HAS_JOBS" != "true" ]; then
         echo -ne "\r⌛ Waiting for jobs to start..."
         continue
     fi
 
-    JOB_ID=$(echo "$JOBS" | jq -r '.jobs[0]?.id')
+    JOB_ID=$(echo "$JOBS_RESPONSE" | jq -r '.jobs[0]?.id')
     if [ -z "$JOB_ID" ] || [ "$JOB_ID" == "null" ]; then
         echo -ne "\r⌛ Waiting for jobs..."
         continue
     fi
 
-    JOB_DETAILS=$(curl -s "https://api.github.com/repos/offici5l/FCE/actions/jobs/$JOB_ID")
+    JOB_DETAILS=$(call_proxy "{\"action\": \"get_job_details\", \"job_id\": $JOB_ID}")
     HAS_STEPS=$(echo "$JOB_DETAILS" | jq -r 'has("steps") and (.steps != null)')
     if [ "$HAS_STEPS" != "true" ]; then
         echo -ne "\r⌛ Waiting for steps..."
@@ -108,7 +120,8 @@ OUTPUT_URL="https://offici5l.github.io/FCE/$UNIQUE_ID/${FILE_INPUT}.zip"
 
 echo "Checking if output is available..."
 for i in {1..30}; do
-    STATUS=$(curl -s -o /dev/null -w "%{http_code}" -I "$OUTPUT_URL")
+    RESPONSE=$(call_proxy "{\"action\": \"check_output\", \"output_url\": \"$OUTPUT_URL\"}")
+    STATUS=$(echo "$RESPONSE" | jq -r '.status')
     if [ "$STATUS" -eq 200 ]; then
         echo "✅ Output is ready and will be available for 7 days:"
         echo "  $OUTPUT_URL"
