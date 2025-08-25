@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FCE Web Trigger</title>
+  <title>Firmware Content Extractor</title>
   <style>
     :root{
-      --bg: #0b0d10; /* dark slate */
+      --bg: #0b0d10;
       --card: #12161b;
       --muted: #8a97a7;
       --text: #e7eef7;
@@ -26,52 +26,41 @@
     header{display:flex;align-items:center;gap:14px}
     header .logo{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:radial-gradient(120% 120% at 30% 20%, #1c2330, #0e1217);box-shadow:inset 0 0 0 1px #243043}
     header h1{margin:0;font-size:clamp(18px,3.2vw,26px);letter-spacing:.5px}
-
     .card{background:linear-gradient(180deg,#12161b,#0f1318);border:1px solid #1e2735;border-radius:var(--radius);box-shadow:var(--shadow)}
     .panel{padding:18px}
-
     form{display:grid;gap:14px}
     .row{display:grid;gap:10px}
     @media (min-width:720px){.row{grid-template-columns:1fr 1fr;gap:12px}}
-
     label{font-size:12px;letter-spacing:.3px;color:var(--muted)}
-    input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid #263243;background:#0d1116;color:var(--text);outline:none;transition:.2s box-shadow,.2s border-color}
+    input, select{width:100%;padding:12px 14px;border-radius:12px;border:1px solid #263243;background:#0d1116;color:var(--text);outline:none;transition:.2s box-shadow,.2s border-color}
     input::placeholder{color:#5f6a79}
-    input:focus{border-color:#34507a;box-shadow:0 0 0 6px var(--ring)}
-
+    input:focus, select:focus{border-color:#34507a;box-shadow:0 0 0 6px var(--ring)}
+    select{appearance:none;background-image:url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%238a97a7%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.4-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E');background-repeat:no-repeat;background-position:right 14px top 50%;background-size:.65em auto;}
     .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     button{appearance:none;border:0;border-radius:14px;padding:12px 16px;background:linear-gradient(180deg,#6ea8fe,#4b79d3);color:white;font-weight:600;letter-spacing:.2px;cursor:pointer;box-shadow:0 6px 16px rgba(78,127,208,.35);transition:transform .06s ease, filter .2s ease}
     button:hover{filter:brightness(1.05)}
     button:active{transform:translateY(1px)}
     button[disabled]{opacity:.6;cursor:not-allowed;filter:grayscale(.3)}
-
-    .hint{font-size:12px;color:var(--muted)}
-
-    .log{background:#0a0e13;border-top:1px solid #1a2331;border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius);max-height:42vh;overflow:auto}
-    .log pre{margin:0;padding:14px 16px;white-space:pre-wrap;word-break:break-word;font: 12.5px/1.55 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
-    .line{display:flex;gap:8px;align-items:flex-start}
-    .ts{opacity:.45}
     .badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px;font-size:12px;border:1px solid #253044;background:#0d131a;color:#b9c6d6}
     .badge.ok{border-color:#1b3b30;color:#aef3d9;background:rgba(55,211,155,.08)}
     .badge.err{border-color:#46262b;color:#ffb7b7;background:rgba(255,107,107,.08)}
     .badge.warn{border-color:#3e341f;color:#ffe39a;background:rgba(245,200,75,.08)}
-
     .steps{display:grid;gap:10px;padding:16px}
     .step{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;border:1px solid #1e2735;background:#0c1117;border-radius:14px;padding:10px 12px}
     .step .name{font-weight:600}
     .step .status{font-size:12px;color:#9cb1cc}
+    .step.sub-step{margin-left:24px}
     .dot{width:10px;height:10px;border-radius:50%;background:#2b384b;box-shadow:0 0 0 2px #1c2636 inset}
     .dot.spin{position:relative}
     .dot.spin:after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid transparent;border-top-color:var(--accent);animation:spin 1s linear infinite}
     .dot.ok{background:var(--ok)}
     .dot.err{background:var(--err)}
-
     @keyframes spin{to{transform:rotate(360deg)}}
-
-    .footer{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;padding:14px 16px;border-top:1px solid #1a2331;color:var(--muted);font-size:12px}
+    .footer{padding:14px 16px;border-top:1px solid #1a2331;}
+    #output-footer{visibility:hidden;}
+    #output-footer div{color:var(--muted);font-size:12px}
     a{color:#9ec5ff;text-decoration:none}
     a:hover{text-decoration:underline}
-    .out{display:flex;gap:10px;align-items:center}
   </style>
 </head>
 <body>
@@ -79,9 +68,8 @@
     <div class="app">
       <header>
         <div class="logo" aria-hidden="true">⚙️</div>
-        <h1>FCE Web Trigger</h1>
+        <h1>Firmware Content Extractor</h1>
       </header>
-
       <section class="card">
         <div class="panel">
           <form id="fceForm">
@@ -91,8 +79,12 @@
                 <input id="url" name="url" type="url" required placeholder="https://example.com/rom.zip" />
               </div>
               <div>
-                <label for="file">File name</label>
-                <input id="file" name="file" required placeholder="boot" />
+                <label for="file">Extract:</label>
+                <select id="file" name="file">
+                  <option value="boot">boot</option>
+                  <option value="init_boot">init_boot</option>
+                  <option value="vendor_boot">vendor_boot</option>
+                </select>
               </div>
             </div>
             <div class="actions">
@@ -102,10 +94,8 @@
           </form>
         </div>
         <div class="steps" id="steps"></div>
-        <div class="log" id="log"><pre id="logPre"></pre></div>
-        <div class="footer">
-          <div>Output link (7 days): <span class="out" id="outWrap"><em>—</em></span></div>
-          <div>Made for GitHub Pages • Single-file app</div>
+        <div id="output-footer" class="footer">
+          <div>Download link (available for 7 days): <span id="outWrap"><em>—</em></span></div>
         </div>
       </section>
     </div>
@@ -114,42 +104,46 @@
 <script>
 (function(){
   const $ = (s, r=document)=>r.querySelector(s);
-  const logPre = $('#logPre');
-  const stepsEl = $('#steps');
-  const badge = $('#statusBadge');
-  const outWrap = $('#outWrap');
-  const startBtn = $('#startBtn');
+  const stepsEl = $("#steps");
+  const badge = $("#statusBadge");
+  const outWrap = $("#outWrap");
+  const startBtn = $("#startBtn");
+  const outputFooter = $("#output-footer");
   const proxyEndpoint = 'https://fce-proxy.vercel.app/api/trigger';
 
   const sleep = (ms)=>new Promise(r=>setTimeout(r,ms));
 
-  const nowTs = ()=> new Date().toLocaleTimeString();
-  function log(msg, type){
-    const tag = type==='ok'? '✅' : type==='err'? '❌' : type==='warn'? '⚠️' : '•';
-    logPre.textContent += `[${nowTs()}] ${tag} ${msg}\n`;
-    logPre.parentElement.scrollTop = logPre.parentElement.scrollHeight;
-  }
   function setBadge(text, cls){
     badge.textContent = text;
     badge.className = `badge ${cls||''}`.trim();
   }
 
-  function makeStep(name){
+  const stepRegistry = new Map();
+  function makeStep(id, name, {isSubStep = false} = {}){
     const el = document.createElement('div');
-    el.className = 'step';
+    el.className = 'step' + (isSubStep ? ' sub-step' : '');
     el.innerHTML = `<div class="dot" aria-hidden="true"></div><div class="name"></div><div class="status"></div>`;
-    $('.name', el).textContent = name;
-    $('.status', el).textContent = 'pending';
+    $(".name", el).textContent = name;
+    $(".status", el).textContent = 'pending';
     stepsEl.appendChild(el);
+    stepRegistry.set(id, el);
     return el;
   }
-  function setStep(el, status, conclusion){
-    const dot = $('.dot', el);
-    const statEl = $('.status', el);
-    if(status==='in_progress'){
+
+  function setStepStatus(id, statusText){
+    const el = stepRegistry.get(id);
+    if(el) $(".status", el).textContent = statusText;
+  }
+
+  function setStepAs(id, state, conclusion){
+    const el = stepRegistry.get(id);
+    if(!el) return;
+    const dot = $(".dot", el);
+    const statEl = $(".status", el);
+    if(state==='in_progress'){
       statEl.textContent = 'in progress…';
       dot.className = 'dot spin';
-    } else if(status==='completed'){
+    } else if(state==='completed'){
       if(conclusion==='success'){
         statEl.textContent = 'done';
         dot.className = 'dot ok';
@@ -158,8 +152,14 @@
         dot.className = 'dot err';
       }
     } else {
-      statEl.textContent = status || 'pending';
+      statEl.textContent = state || 'pending';
+      dot.className = 'dot';
     }
+  }
+
+  function showOutputLink(url){
+    outputFooter.style.visibility = 'visible';
+    outWrap.innerHTML = `<a href="${url}" target="_blank" rel="noopener">${url}</a>`;
   }
 
   function createUniqueId(url, file){
@@ -186,121 +186,134 @@
     return data;
   }
 
-  async function triggerWorkflow({url, file, uniqueId}){
-    log('Triggering workflow…');
-    const body = { action: 'trigger', url, file, unique_id: uniqueId };
-    await callProxy(body);
-    log(`Workflow triggered successfully (ID: ${uniqueId})`, 'ok');
-  }
-
-  async function findRunId({uniqueId}){
-    log('Looking for matching workflow run…');
-    for(let attempt=1; attempt<=60; attempt++) {
-      const runsData = await callProxy({ action: 'get_runs' });
-      const runs = runsData.workflow_runs || [];
-      for(const run of runs){
-        const jobsData = await callProxy({ action: 'get_jobs', run_id: run.id });
-        if(jobsData && Array.isArray(jobsData.jobs)){
-          const match = jobsData.jobs.find(j=> j && j.name === uniqueId);
-          if(match){
-            log(`Workflow run detected: ID = ${run.id}`, 'ok');
-            return run.id;
-          }
-        }
-      }
-      log('No workflow runs found yet, waiting…');
-      await sleep(5000);
-    }
-    throw new Error(`No workflow run detected for ${uniqueId}`);
-  }
-
-  async function trackRun({runId}){
-    let status = 'in_progress';
-    const stepMap = new Map();
-
-    while(status !== 'completed'){
-      await sleep(3000);
-      const run = await callProxy({ action: 'get_run_details', run_id: runId });
-      status = run.status;
-      const conclusion = run.conclusion;
-
-      const jobsData = await callProxy({ action: 'get_jobs', run_id: runId });
-      const job = jobsData.jobs && jobsData.jobs[0];
-      if(!job){ log('⌛ Waiting for jobs…'); continue; }
-
-      const jobDetails = await callProxy({ action: 'get_job_details', job_id: job.id });
-      const steps = jobDetails.steps || [];
-      for(const s of steps){
-        if(!stepMap.has(s.name)) stepMap.set(s.name, makeStep(s.name));
-        const el = stepMap.get(s.name);
-        setStep(el, s.status, s.conclusion);
-      }
-
-      if(status === 'completed'){
-        log(`Workflow finished with conclusion: ${conclusion}`,(conclusion==='success'?'ok':(conclusion?'err':undefined)));
-        return conclusion;
-      }
-    }
-  }
-
-  async function checkOutput({uniqueId, file}){
-    const outputUrl = `https://offici5l.github.io/FCE/${encodeURIComponent(uniqueId)}/${encodeURIComponent(file)}.zip`;
-    log('Checking if output is available…');
-
-    for(let i=0;i<30;i++){
-      try {
-        const res = await callProxy({ action: 'check_output', output_url: outputUrl });
-        if(res.status === 200){
-          log('Output is ready and will be available for 7 days:', 'ok');
-          outWrap.innerHTML = `<a href="${outputUrl}" target="_blank" rel="noopener">${outputUrl}</a>`;
-          return true;
-        }
-      } catch(e) { /* ignore */ }
-      await sleep(5000);
-    }
-
-    log('Output not found yet. You can try the link later.','warn');
-    outWrap.innerHTML = `<a href="${outputUrl}" target="_blank" rel="noopener">${outputUrl}</a>`;
-    return false;
-  }
-
   $('#fceForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
 
-    // Reset UI
     stepsEl.innerHTML = '';
-    logPre.textContent = '';
+    outputFooter.style.visibility = 'hidden';
     outWrap.innerHTML = '<em>—</em>';
+    stepRegistry.clear();
 
-    const url = $('#url').value.trim();
-    const file = $('#file').value.trim();
+    const url = $("#url").value.trim();
+    const file = $("#file").value.trim();
 
     if(!url || !file){
       setBadge('Missing input','err');
-      log('Please provide both URL and file name.','err');
       return;
     }
 
     const uniqueId = createUniqueId(url, file);
+    const outputUrl = `https://offici5l.github.io/FCE/${encodeURIComponent(uniqueId)}/${encodeURIComponent(file)}.zip`;
 
     startBtn.disabled = true;
-    setBadge('Working…','warn');
+    setBadge('Working…', 'warn');
+    let activeStepId = '';
 
-    try{
-      await triggerWorkflow({url, file, uniqueId});
-      const runId = await findRunId({uniqueId});
-      const conclusion = await trackRun({runId});
-      if(conclusion !== 'success'){
-        setBadge('Failed','err');
-        await checkOutput({uniqueId, file});
-        return;
+    try {
+      activeStepId = 'precheck';
+      makeStep(activeStepId, 'Checking for pre-existing file');
+      setStepAs(activeStepId, 'in_progress');
+      const checkRes = await callProxy({ action: 'check_output', output_url: outputUrl });
+      if (checkRes.status === 200) {
+          setStepAs(activeStepId, 'completed', 'success');
+          setStepStatus(activeStepId, 'Found. Download link is ready.');
+          setBadge('Found', 'ok');
+          showOutputLink(outputUrl);
+          return;
       }
-      setBadge('Success','ok');
-      await checkOutput({uniqueId, file});
-    } catch (err){
+      setStepAs(activeStepId, 'completed', 'success');
+      setStepStatus(activeStepId, 'Not found, proceeding.');
+
+      activeStepId = 'trigger';
+      makeStep(activeStepId, 'Triggering workflow');
+      setStepAs(activeStepId, 'in_progress');
+      await callProxy({ action: 'trigger', url, file, unique_id: uniqueId });
+      setStepAs(activeStepId, 'completed', 'success');
+
+      activeStepId = 'find_run';
+      makeStep(activeStepId, 'Finding workflow run');
+      setStepAs(activeStepId, 'in_progress');
+      let delay = 10000;
+      let runId;
+      for(let attempt=1; attempt<=60; attempt++) {
+        setStepStatus(activeStepId, `waiting... (attempt ${attempt}, delay ${delay/1000}s)`);
+        await sleep(delay);
+        delay = Math.min(delay + 1000, 15000);
+        const runsData = await callProxy({ action: 'get_runs' });
+        for(const run of (runsData.workflow_runs || [])){
+          const jobsData = await callProxy({ action: 'get_jobs', run_id: run.id });
+          if(jobsData.jobs && jobsData.jobs.find(j=> j.name === uniqueId)){
+            runId = run.id;
+            break;
+          }
+        }
+        if(runId) break;
+      }
+      if (!runId) throw new Error("Could not find a matching workflow run in 60 attempts.");
+      setStepAs(activeStepId, 'completed', 'success');
+      setStepStatus(activeStepId, `Detected Run ID: ${runId}`);
+
+      activeStepId = 'track';
+      makeStep(activeStepId, 'Executing workflow');
+      setStepAs(activeStepId, 'in_progress');
+      let status = 'in_progress';
+      let conclusion = '';
+      delay = 10000;
+      const dynamicSteps = new Map();
+
+      while(status !== 'completed'){
+        await sleep(delay);
+        delay = Math.min(delay + 1000, 15000);
+        const run = await callProxy({ action: 'get_run_details', run_id: runId });
+        status = run.status;
+        conclusion = run.conclusion;
+        setStepStatus(activeStepId, `Workflow status: ${status}`);
+
+        const jobsData = await callProxy({ action: 'get_jobs', run_id: runId });
+        const job = jobsData.jobs && jobsData.jobs[0];
+        if(!job){ continue; }
+
+        const jobDetails = await callProxy({ action: 'get_job_details', job_id: job.id });
+        for(const s of (jobDetails.steps || [])){
+          const subStepId = `sub_${s.name}`;
+          if(!dynamicSteps.has(s.name)) dynamicSteps.set(s.name, makeStep(subStepId, s.name, {isSubStep: true}));
+          setStepAs(subStepId, s.status, s.conclusion);
+        }
+      }
+      if (conclusion !== 'success') throw new Error(`Workflow failed with conclusion: ${conclusion}.`);
+      setStepAs(activeStepId, 'completed', 'success');
+      
+      activeStepId = 'output';
+      makeStep(activeStepId, 'Checking for output');
+      setStepAs(activeStepId, 'in_progress');
+      delay = 10000;
+      let outputFound = false;
+      for(let i=0;i<30;i++){
+        setStepStatus(activeStepId, `waiting... (attempt ${i+1}, delay ${delay/1000}s)`);
+        const res = await callProxy({ action: 'check_output', output_url: outputUrl });
+        if(res.status === 200){
+          showOutputLink(outputUrl);
+          outputFound = true;
+          break;
+        }
+        await sleep(delay);
+        delay = Math.min(delay + 1000, 15000);
+      }
+
+      if(outputFound) {
+        setStepAs(activeStepId, 'completed', 'success');
+        setBadge('Success', 'ok');
+      } else {
+        throw new Error("Output not found after 30 attempts.");
+      }
+
+    } catch (err) {
       console.error(err);
-      setBadge('Error','err');
-      log(`Error: ${err.message || err}`, 'err');
+      setBadge('Error', 'err');
+      if (activeStepId && stepRegistry.has(activeStepId)) {
+        setStepAs(activeStepId, 'completed', 'failure');
+        setStepStatus(activeStepId, err.message);
+      }
     } finally {
       startBtn.disabled = false;
     }
